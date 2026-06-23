@@ -8,7 +8,7 @@ arch=('x86_64')
 url="https://github.com/Patola/InputPlumber"
 license=('GPL-3.0-or-later')
 depends=('dbus' 'hidapi' 'libevdev' 'libiio')
-makedepends=('rust' 'cargo' 'git' 'clang')
+makedepends=('rust' 'cargo' 'clang' 'git')
 optdepends=('polkit: for policy-based authentication')
 provides=('inputplumber')
 conflicts=('inputplumber' 'inputplumber-bin' 'inputplumber-git')
@@ -25,11 +25,33 @@ pkgver() {
 build() {
   cd "$_pkgbase"
   export RUSTUP_TOOLCHAIN=stable
-  export CARGO_TARGET_DIR=target
-  cargo build --release --locked --target x86_64-unknown-linux-gnu
+  # Build for the host without --target so cargo uses the native linker and
+  # standard library search paths (avoids cross-linker sysroot issues with hidapi).
+  cargo build --release --locked
 }
 
 package() {
   cd "$_pkgbase"
-  make install PREFIX="$pkgdir/usr" BUILD_TYPE=release
+  install -D -m 755 target/release/inputplumber \
+    "$pkgdir/usr/bin/inputplumber"
+  install -D -m 644 "rootfs/usr/share/dbus-1/system.d/org.shadowblip.InputPlumber.conf" \
+    "$pkgdir/usr/share/dbus-1/system.d/org.shadowblip.InputPlumber.conf"
+  install -D -m 644 -t "$pkgdir/usr/share/polkit-1/actions/" \
+    rootfs/usr/share/polkit-1/actions/*
+  install -D -m 644 -t "$pkgdir/usr/share/polkit-1/rules.d/" \
+    rootfs/usr/share/polkit-1/rules.d/*
+  install -D -m 644 -t "$pkgdir/usr/lib/systemd/system/" \
+    rootfs/usr/lib/systemd/system/*
+  install -D -m 644 -t "$pkgdir/usr/lib/udev/hwdb.d/" \
+    rootfs/usr/lib/udev/hwdb.d/*
+  install -D -m 644 -t "$pkgdir/usr/lib/udev/rules.d/" \
+    rootfs/usr/lib/udev/rules.d/*
+  install -D -m 644 -t "$pkgdir/usr/share/inputplumber/devices/" \
+    rootfs/usr/share/inputplumber/devices/*
+  install -D -m 644 -t "$pkgdir/usr/share/inputplumber/schema/" \
+    rootfs/usr/share/inputplumber/schema/*
+  install -D -m 644 -t "$pkgdir/usr/share/inputplumber/capability_maps/" \
+    rootfs/usr/share/inputplumber/capability_maps/*
+  install -D -m 644 -t "$pkgdir/usr/share/inputplumber/profiles/" \
+    rootfs/usr/share/inputplumber/profiles/*
 }
