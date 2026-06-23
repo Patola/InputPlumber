@@ -35,6 +35,7 @@ jobs:
             hidapi \
             libevdev \
             libiio \
+            linux-headers \
             sudo
 
       - name: Checkout repository
