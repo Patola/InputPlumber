@@ -1,25 +1,35 @@
-# Maintainer: William Edwards <shadowapex@gmail.com>
-pkgname=inputplumber-bin
+# Maintainer: Cláudio 'Patola' Sampaio <patola@gmail.com>
+pkgname=inputplumber-patola
 _pkgbase=inputplumber
-pkgver=v0.77.7
+pkgver=0.77.7
 pkgrel=1
-pkgdesc="Open source input router and remapper daemon for Linux"
+pkgdesc="Open source input router and remapper daemon for Linux (Patola fork with Legion Go 2 fixes)"
 arch=('x86_64')
-url="https://github.com/ShadowBlip/inputplumber"
-license=('GPL')
+url="https://github.com/Patola/InputPlumber"
+license=('GPL-3.0-or-later')
 depends=('dbus' 'libevdev' 'libiio')
-optdepends=('polkit')
+makedepends=('rust' 'cargo' 'git')
+optdepends=('polkit: for policy-based authentication')
 provides=('inputplumber')
-conflicts=('inputplumber-git')
-source=(inputplumber-$pkgver.tar.gz::https://github.com/ShadowBlip/inputplumber/releases/download/$pkgver/inputplumber-x86_64.tar.gz)
+conflicts=('inputplumber' 'inputplumber-bin' 'inputplumber-git')
+source=("$_pkgbase::git+https://github.com/Patola/InputPlumber.git#branch=main")
+sha256sums=('SKIP')
 
-sha256sums=('b719986186c6e692138130fd953fad763b030ef948e1ff20a998c6edd35306ed')
+pkgver() {
+  cd "$_pkgbase"
+  local _cargover
+  _cargover=$(grep '^version =' Cargo.toml | head -1 | cut -d'"' -f2)
+  printf "%s.r%s.g%s" "$_cargover" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
 
-prepare() {
-  cd "$srcdir/${_pkgbase}"
+build() {
+  cd "$_pkgbase"
+  export RUSTUP_TOOLCHAIN=stable
+  export CARGO_TARGET_DIR=target
+  cargo build --release --locked --target x86_64-unknown-linux-gnu
 }
 
 package() {
-  cd "$srcdir/${_pkgbase}"
-  cp -r ./* ${pkgdir}
+  cd "$_pkgbase"
+  make install PREFIX="$pkgdir/usr" BUILD_TYPE=release
 }
