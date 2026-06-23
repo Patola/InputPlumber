@@ -30,6 +30,7 @@ jobs:
             git \
             rust \
             cargo \
+            clang \
             dbus \
             libevdev \
             libiio \
